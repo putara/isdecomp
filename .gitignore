@@ -1,0 +1,8 @@
+bin/
+test/
+*.obj
+*.exe
+*.lib
+*.map
+*.pdb
+*.z

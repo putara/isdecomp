@@ -1,0 +1,66 @@
+INTDIR          = .\bin\obj
+OUTDIR          = .\bin
+
+PROJ_NAME       = isdecomp
+TARGET_EXE      = $(OUTDIR)\$(PROJ_NAME).exe
+TARGET_MAP      = $(OUTDIR)\$(PROJ_NAME).map
+TARGET_PDB      = $(OUTDIR)\$(PROJ_NAME).pdb
+
+TARGET_OBJS = \
+	"$(INTDIR)\main.obj"    \
+	"$(INTDIR)\isdlib.obj"  \
+	"$(INTDIR)\blast.obj"
+
+LINK            = link.exe
+CFLAGS          = $(CFLAGS) /nologo /c /Gy /GA /GF /Gz /GL /GS /GR- /Zi /MD /O1ib2
+CFLAGS          = $(CFLAGS) /W4 /WX /wd4127 /wd4244 /wd4324
+CFLAGS          = $(CFLAGS) /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS"
+CFLAGS          = $(CFLAGS) /Fo"$(INTDIR)/" /Fd"$(INTDIR)/"
+LINKFLAGS       = $(LINKFLAGS) /nologo /release /time /ltcg /opt:icf /dynamicbase:no /subsystem:console /map:"$(TARGET_MAP)" /PDBALTPATH:"%_PDB%"
+LINKFLAGS       = $(LINKFLAGS) /debug /incremental:no
+LINK_LIBS       = $(LINK_LIBS) kernel32.lib
+
+!if "$(AMD64)" == "1"
+LINKFLAGS       = $(LINKFLAGS) /machine:AMD64
+!else
+LINKFLAGS       = $(LINKFLAGS) /machine:X86
+!endif
+
+
+all: "$(INTDIR)" "$(OUTDIR)" "$(TARGET_EXE)"
+
+clean: cleanobj
+	-@erase "$(TARGET_EXE)"
+	-@erase "$(TARGET_MAP)"
+	-@rmdir /s /q "$(INTDIR)"
+	-@rmdir /s /q "$(OUTDIR)"
+
+cleanobj: cleanpdb cleanobjonly
+
+cleanpdb:
+	-@erase "$(TARGET_PDB)" 2>NUL
+
+cleanobjonly:
+	-@erase $(TARGET_OBJS) 2>NUL
+	-@erase "$(INTDIR)\vc??.pdb" 2>NUL
+	-@erase "$(INTDIR)\vc??.idb" 2>NUL
+
+"$(INTDIR)" :
+	@if not exist "$(INTDIR)" mkdir "$(INTDIR)"
+
+"$(OUTDIR)" :
+	@if not exist "$(OUTDIR)" mkdir "$(OUTDIR)"
+
+"$(TARGET_EXE)" : $(TARGET_OBJS)
+	$(LINK) $(LINKFLAGS) $(LINK_LIBS) /out:$@ @<<
+		$(TARGET_OBJS)
+<<
+
+.SUFFIXES: .c .cpp .obj
+
+.c{$(INTDIR)}.obj::
+	$(CC) $(CFLAGS) $<
+
+main.c: isdecomp.h blast.h
+isdlib.c: isdecomp.h blast.h
+blast.c: blast.h
